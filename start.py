@@ -12,26 +12,10 @@ from env import OPENAI_API_KEY
 MAX_CHUNK_SIZE = 20 * 1024 * 1024
 
 
-def generate_sequential_filename():
-    """Returns next available sequential number for the result file"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    results_dir = os.path.join(current_dir, "results")
-
-    # Return initial number if directory doesn't exist
-    if not os.path.exists(results_dir):
-        return "001"
-
-    existing_files = glob.glob(os.path.join(results_dir, "result*.txt"))
-    if not existing_files:
-        return "001"
-
-    numbers = []
-    for filename in existing_files:
-        match = re.search(r'result(\d+)\.txt', filename)
-        if match:
-            numbers.append(int(match.group(1)))
-    next_num = max(numbers) + 1 if numbers else 1
-    return f"{next_num:03d}"
+def get_output_filename(audio_filename):
+    """Generate output filename based on input audio filename"""
+    base_name = Path(audio_filename).stem
+    return f"{base_name}.txt"
 
 
 def is_supported_openai_format(filename):

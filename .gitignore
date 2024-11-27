@@ -1,3 +1,5 @@
 /audio
 /results
 env.py
+*.project_src
+__pycache__
