@@ -6,10 +6,7 @@ from pathlib import Path
 from pydub import AudioSegment
 import tempfile
 import math
-from env import OPENAI_API_KEY
-
-# Maximum chunk size for OpenAI API (20MB)
-MAX_CHUNK_SIZE = 20 * 1024 * 1024
+from env import MAX_CHUNK_SIZE_MB, OPENAI_API_KEY
 
 
 def get_output_filename(audio_filename):
@@ -31,7 +28,7 @@ def calculate_optimal_chunk_duration(file_size):
     Uses approximate ratio: 1 minute of MP3 ≈ 1MB at 128kbps
     Includes 20% safety margin for overhead
     """
-    chunk_minutes = (MAX_CHUNK_SIZE / 1024 / 1024) * 0.8
+    chunk_minutes = (MAX_CHUNK_SIZE_MB / 1024 / 1024) * 0.8
     return int(chunk_minutes * 60 * 1000)  # Convert to milliseconds
 
 
@@ -115,7 +112,6 @@ def process_audio_file(api_key, audio_filename):
         results_dir = os.path.join(current_dir, "results")
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        # Set up directory structure
         ensure_directory_exists(audio_dir)
         ensure_directory_exists(results_dir)
 
@@ -123,7 +119,6 @@ def process_audio_file(api_key, audio_filename):
             print(f"Error: File {audio_filename} not found in {audio_dir}")
             return None
 
-        # Handle file format conversion if needed
         if not is_supported_openai_format(audio_filename):
             print("File format not supported by OpenAI API. Converting to MP3...")
             converted_path = convert_audio_to_mp3(audio_path)
@@ -132,11 +127,9 @@ def process_audio_file(api_key, audio_filename):
             audio_path = converted_path
             temp_files.append(converted_path)
 
-        # Process audio in chunks
         chunks = split_audio_into_chunks(audio_path)
         temp_files.extend(chunks)
 
-        # Transcribe all chunks
         print("Starting file transcription...")
         transcriptions = []
 
@@ -148,10 +141,8 @@ def process_audio_file(api_key, audio_filename):
                 continue
             transcriptions.append(chunk_text)
 
-        # Combine and save results
         full_transcription = " ".join(transcriptions)
-        file_number = generate_sequential_filename()
-        output_filename = f"result{file_number}.txt"
+        output_filename = get_output_filename(audio_filename)
         output_path = os.path.join(results_dir, output_filename)
 
         with open(output_path, "w", encoding="utf-8") as output_file:
@@ -165,7 +156,6 @@ def process_audio_file(api_key, audio_filename):
         return None
 
     finally:
-        # Cleanup temporary files
         for temp_file in temp_files:
             if temp_file and os.path.exists(temp_file):
                 try:
@@ -194,7 +184,6 @@ def get_available_audio_files():
 
 
 if __name__ == "__main__":
-    # Check for required dependencies
     try:
         import pydub
     except ImportError:
@@ -206,7 +195,6 @@ if __name__ == "__main__":
         print("Linux: sudo apt-get install ffmpeg")
         exit()
 
-    # Display available audio files
     audio_files = get_available_audio_files()
     if audio_files:
         print("Available audio files in 'audio' directory:")
