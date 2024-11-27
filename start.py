@@ -12,7 +12,15 @@ from env import MAX_CHUNK_SIZE_MB, OPENAI_API_KEY
 def get_output_filename(audio_filename):
     """Generate output filename based on input audio filename"""
     base_name = Path(audio_filename).stem
-    return f"{base_name}.txt"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    results_dir = os.path.join(current_dir, "results")
+
+    version = 0
+    while True:
+        filename = f"{base_name}.txt" if version == 0 else f"{base_name}_v{version}.txt"
+        if not os.path.exists(os.path.join(results_dir, filename)):
+            return filename
+        version += 1
 
 
 def is_supported_openai_format(filename):
